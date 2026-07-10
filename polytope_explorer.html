@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>4D Regular Polytope Explorer</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:ui-monospace,monospace}
+html,body{height:100%;background:#0a0c1c;color:#c0c8e0;overflow:hidden}
+#c{position:fixed;inset:0}
+#ui{position:fixed;inset:0;z-index:2;pointer-events:none}
+.p{pointer-events:auto;background:rgba(12,14,28,.92);border:1px solid #1e2a52;border-radius:10px;padding:12px}
+#menu{position:absolute;top:12px;left:12px;min-width:190px}
+#menu h3{color:#5eeaff;font-size:13px;margin-bottom:8px;letter-spacing:.5px}
+.b{display:block;width:100%;padding:7px 10px;margin:3px 0;background:#0f1330;border:1px solid #22305a;border-radius:6px;color:#c0c8e0;font-size:11px;cursor:pointer;text-align:left;transition:.15s}
+.b:hover{border-color:#5eeaff;color:#5eeaff}
+.b.active{background:#16233f;border-color:#5eeaff;color:#5eeaff}
+#info{position:absolute;bottom:12px;left:12px;max-width:340px;line-height:1.6;font-size:11px}
+#info .l{color:#6b7599}#info .v{color:#5eeaff}#info .m{color:#ffb84c}
+#info .note{color:#6b7599;font-size:10px;margin-top:8px;font-style:italic}
+#hint{position:absolute;bottom:12px;right:12px;text-align:right;color:#6b7599;font-size:10px}
+#hint span{color:#5eeaff}
+#title{position:absolute;top:12px;left:50%;transform:translateX(-50%);text-align:center;color:#5eeaff;font-size:13px;font-weight:bold;pointer-events:none;text-shadow:0 0 8px rgba(94,234,255,.3)}
+</style></head>
+<body>
+<canvas id="c"></canvas>
+<div id="ui">
+  <div id="title">4D REGULAR POLYTOPE EXPLORER</div>
+  <div class="p" id="menu">
+    <h3>SIX REGULAR 4-POLYTOPES</h3>
+    <button class="b" data-id="1">5-cell (simplex)</button>
+    <button class="b" data-id="2">8-cell (tesseract)</button>
+    <button class="b" data-id="3">16-cell</button>
+    <button class="b active" data-id="4">24-cell</button>
+    <button class="b" data-id="5">600-cell</button>
+    <button class="b" data-id="6">120-cell</button>
+  </div>
+  <div class="p" id="info">
+    <div><span class="l">name:</span> <span class="v" id="n">24-cell {3,4,3}</span></div>
+    <div><span class="l">f-vector:</span> <span class="v" id="f">V=24 E=96 F=96 C=24</span></div>
+    <div><span class="l">symmetry:</span> <span class="v" id="g">F4 (order 1152)</span></div>
+    <div><span class="l">group theory:</span> <span class="m" id="q">vertices = binary tetrahedral group 2T</span></div>
+    <div class="note" id="note">A 4D geometry visualizer. Group-theory facts are classical (McKay correspondence), not a quantum computing tool.</div>
+  </div>
+  <div class="p" id="hint"><div><span>drag</span> rotate &nbsp; <span>pinch</span> zoom &nbsp; <span>2-tap</span> reset</div></div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const PHI=(1+Math.sqrt(5))/2,PI=PHI-1,PS=PHI+1,PIS=2-PHI,S5=2*PHI-1;
+function perms(a){if(a.length<=1)return[a];const r=[];for(let i=0;i<a.length;i++){const rest=[...a.slice(0,i),...a.slice(i+1)];for(const p of perms(rest))r.push([a[i],...p])}return r}
+function cart(a){if(!a.length)return[[]];const r=[],rest=cart(a.slice(1));for(const x of a[0])for(const c of rest)r.push([x,...c]);return r}
+function allP(t){const r=new Set();for(const m of perms(t)){const nz=m.map((x,i)=>Math.abs(x)>1e-9?i:-1).filter(i=>i>=0);if(!nz.length){r.add(JSON.stringify(m.map(x=>+x.toFixed(9))));continue}for(const s of cart(Array(nz.length).fill([-1,1]))){const v=[...m];for(let k=0;k<nz.length;k++)v[nz[k]]=s[k]*Math.abs(v[nz[k]]);r.add(JSON.stringify(v.map(x=>+x.toFixed(9))))}}return[...r].map(JSON.parse)}
+function evenP(t){const r=new Set();for(const m of perms(t)){const full=[...m];const idx=[0,1,2,3].sort((a,b)=>full[a]-full[b]);let inv=0;for(let i=0;i<4;i++)for(let j=i+1;j<4;j++)if(idx[i]>idx[j])inv++;if(inv%2)continue;const nz=m.map((x,i)=>Math.abs(x)>1e-9?i:-1).filter(i=>i>=0);if(!nz.length){r.add(JSON.stringify(m.map(x=>+x.toFixed(9))));continue}for(const s of cart(Array(nz.length).fill([-1,1]))){const v=[...m];for(let k=0;k<nz.length;k++)v[nz[k]]=s[k]*Math.abs(v[nz[k]]);r.add(JSON.stringify(v.map(x=>+x.toFixed(9))))}}return[...r].map(JSON.parse)}
+function dsq(a,b){return a.reduce((s,x,i)=>s+(x-b[i])**2,0)}
+function findE(v){const n=v.length;let md=Infinity;for(let i=0;i<n;i++)for(let j=i+1;j<n;j++){const d=Math.sqrt(dsq(v[i],v[j]));if(d>1e-9&&d<md)md=d}const e=[];for(let i=0;i<n;i++)for(let j=i+1;j<n;j++){if(Math.abs(Math.sqrt(dsq(v[i],v[j]))-md)<1e-6)e.push([i,j])}return e}
+function gs(v){const b=[];for(const vec of v){let u=[...vec];for(const c of b){const d=u.reduce((s,x,i)=>s+x*c[i],0);u=u.map((x,i)=>x-d*c[i])}const n=Math.sqrt(u.reduce((s,x)=>s+x*x,0));if(n>1e-9)b.push(u.map(x=>x/n))}return b}
+const P={};
+function build(){
+  const b5=gs([[1,-1,0,0,0],[1,1,-2,0,0],[1,1,1,-3,0],[1,1,1,1,-4]]);
+  let v5=[[4,-1,-1,-1,-1],[-1,4,-1,-1,-1],[-1,-1,4,-1,-1],[-1,-1,-1,4,-1],[-1,-1,-1,-1,4]].map(v=>b5.map(bb=>v.reduce((s,x,i)=>s+x*bb[i],0)));
+  const n5=Math.sqrt(v5[0].reduce((s,x)=>s+x*x,0));v5=v5.map(v=>v.map(x=>x/n5));
+  P[1]={name:"5-cell {3,3,3}",v:v5,e:findE(v5),f:[5,10,10,5],g:"S5 (order 120)",q:"5 vertices of the 4D simplex",ps:0.14,la:0.5};
+  const v8=cart([[-1,1],[-1,1],[-1,1],[-1,1]]);
+  P[2]={name:"8-cell {4,3,3}",v:v8,e:findE(v8),f:[16,32,24,8],g:"B4 (order 384)",q:"hypercube graph; 4-bit strings on vertices",ps:0.08,la:0.3};
+  const v16=allP([1,0,0,0]);
+  P[3]={name:"16-cell {3,3,4}",v:v16,e:findE(v16),f:[8,24,32,16],g:"B4 (order 384)",q:"dual of the tesseract; cross-polytope",ps:0.11,la:0.4};
+  const v24=allP([1,1,0,0]);
+  P[4]={name:"24-cell {3,4,3}",v:v24,e:findE(v24),f:[24,96,96,24],g:"F4 (order 1152)",q:"vertices = binary tetrahedral group 2T (verified)",ps:0.11,la:0.4};
+  const v600=[...allP([1,0,0,0]),...cart([[-0.5,0.5],[-0.5,0.5],[-0.5,0.5],[-0.5,0.5]]),...evenP([0,0.5,PHI/2,PI/2])];
+  P[5]={name:"600-cell {3,3,5}",v:v600,e:findE(v600),f:[120,720,1200,600],g:"H4 (order 14400)",q:"vertices = binary icosahedral group 2I (order 120)",ps:0.04,la:0.18};
+  const v120=[...allP([0,0,2,2]),...allP([PHI,PHI,PHI,PIS]),...allP([1,1,1,S5]),...allP([PI,PI,PI,PS]),...evenP([0,PI,PHI,S5]),...evenP([0,PIS,1,PS]),...evenP([PI,1,PHI,2])];
+  P[6]={name:"120-cell {5,3,3}",v:v120,e:findE(v120),f:[600,1200,720,120],g:"H4 (order 14400)",q:"related to the icosian ring and E8 lattice",ps:0.015,la:0.12};
+}
+function rot(v,a,pl){const c=Math.cos(a),s=Math.sin(a),r=[...v];if(pl=="xy"){r[0]=c*v[0]-s*v[1];r[1]=s*v[0]+c*v[1]}else if(pl=="zw"){r[2]=c*v[2]-s*v[3];r[3]=s*v[2]+c*v[3]}else if(pl=="xz"){r[0]=c*v[0]-s*v[2];r[2]=s*v[0]+c*v[2]}return r}
+let scene,cam,ren,cm,cl,cid=4,ang={xy:.3,zw:.5,xz:.2},drag=false,lp={x:0,y:0},ld=0,lt=0;
+function init(){const c=document.getElementById("c");scene=new THREE.Scene();scene.background=new THREE.Color(0x0a0c1c);cam=new THREE.PerspectiveCamera(60,innerWidth/innerHeight,.01,100);cam.position.z=3.5;ren=new THREE.WebGLRenderer({canvas:c,antialias:true});ren.setSize(innerWidth,innerHeight);ren.setPixelRatio(Math.min(devicePixelRatio,2));load(cid);(function a(){requestAnimationFrame(a);ren.render(scene,cam)})()}
+function load(id){if(cm){scene.remove(cm);cm.geometry.dispose();cm.material.dispose()}if(cl){scene.remove(cl);cl.geometry.dispose();cl.material.dispose()}const p=P[id];const vr=p.v.map(v=>{let r=[...v];r=rot(r,ang.xy,"xy");r=rot(r,ang.zw,"zw");r=rot(r,ang.xz,"xz");return r});const v3=vr.map(r=>[r[0],r[1],r[2]]);const dp=vr.map(r=>r[3]);const dn=Math.min(...dp),dx=Math.max(...dp);const g=new THREE.BufferGeometry();const pos=new Float32Array(v3.length*3),col=new Float32Array(v3.length*3);for(let i=0;i<v3.length;i++){pos[i*3]=v3[i][0];pos[i*3+1]=v3[i][1];pos[i*3+2]=v3[i][2];const t=(dp[i]-dn)/(dx-dn+1e-9);col[i*3]=Math.min(1,Math.max(0,2*t-.5));col[i*3+1]=Math.min(1,Math.max(0,1-Math.abs(2*t-1)));col[i*3+2]=Math.min(1,Math.max(0,2*(1-t)-.5))}g.setAttribute("position",new THREE.BufferAttribute(pos,3));g.setAttribute("color",new THREE.BufferAttribute(col,3));cm=new THREE.Points(g,new THREE.PointsMaterial({size:p.ps,vertexColors:true,transparent:true,opacity:.92,sizeAttenuation:true}));scene.add(cm);const lg=new THREE.BufferGeometry();const la=new Float32Array(p.e.length*6);for(let i=0;i<p.e.length;i++){const[a,b]=p.e[i];la[i*6]=v3[a][0];la[i*6+1]=v3[a][1];la[i*6+2]=v3[a][2];la[i*6+3]=v3[b][0];la[i*6+4]=v3[b][1];la[i*6+5]=v3[b][2]}lg.setAttribute("position",new THREE.BufferAttribute(la,3));cl=new THREE.LineSegments(lg,new THREE.LineBasicMaterial({color:0x5eeaff,transparent:true,opacity:p.la}));scene.add(cl);document.getElementById("n").textContent=p.name;document.getElementById("f").textContent=`V=${p.f[0]} E=${p.f[1]} F=${p.f[2]} C=${p.f[3]}`;document.getElementById("g").textContent=p.g;document.getElementById("q").textContent=p.q}
+function setup(){const c=document.getElementById("c");
+c.addEventListener("mousedown",e=>{drag=true;lp={x:e.clientX,y:e.clientY}});
+c.addEventListener("mousemove",e=>{if(!drag)return;ang.xy+=(e.clientX-lp.x)*.01;ang.xz+=(e.clientY-lp.y)*.01;lp={x:e.clientX,y:e.clientY};load(cid)});
+addEventListener("mouseup",()=>drag=false);
+c.addEventListener("touchstart",e=>{if(e.touches.length==1){drag=true;lp={x:e.touches[0].clientX,y:e.touches[0].clientY}}else if(e.touches.length==2){ld=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY)}},{passive:false});
+c.addEventListener("touchmove",e=>{e.preventDefault();if(e.touches.length==1&&drag){ang.xy+=(e.touches[0].clientX-lp.x)*.01;ang.xz+=(e.touches[0].clientY-lp.y)*.01;lp={x:e.touches[0].clientX,y:e.touches[0].clientY};load(cid)}else if(e.touches.length==2){const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);cam.position.z=Math.max(1,Math.min(10,cam.position.z/(d/ld)));ld=d}},{passive:false});
+c.addEventListener("touchend",()=>{drag=false;const n=Date.now();if(n-lt<300){ang={xy:.3,zw:.5,xz:.2};cam.position.z=3.5;load(cid)}lt=n});
+document.querySelectorAll(".b").forEach(b=>b.addEventListener("click",()=>{document.querySelectorAll(".b").forEach(x=>x.classList.remove("active"));b.classList.add("active");cid=+b.dataset.id;load(cid)}));
+addEventListener("resize",()=>{cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();ren.setSize(innerWidth,innerHeight)})}
+build();init();setup();
+</script></body></html>
