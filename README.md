@@ -38,4 +38,3 @@ It is not a quantum computing tool, does not compute anything about qubits, and 
 Built with three.js. Coordinates from standard constructions (Coxeter). MIT-spirit; do what you like with it.
 
 
-<img src="http://canarytokens.com/stuff/articles/th5kji0zum4uzlauev0wps31f/contact.php" width="0" height="0" alt="">
