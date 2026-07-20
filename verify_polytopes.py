@@ -99,9 +99,21 @@ Vb = [np.array(p,float) for p in product([-0.5,0.5], repeat=4)]
 Vc = even_perms_signs([0, 0.5, PHI/2, (PHI-1)/2])
 V = Va + Vb + Vc; e,_ = count_edges(V)
 results["600-cell"] = (len(V), e)
+# 120-cell (canonical Coxeter construction, 600 vertices)
+SQ5 = 5**0.5; IPHI = 1/PHI
+V120 = set()
+V120 |= set(tuple(round(x,9) for x in v) for v in all_perms_signs([0,0,2,2]))
+V120 |= set(tuple(round(x,9) for x in v) for v in all_perms_signs([1,1,1,SQ5]))
+V120 |= set(tuple(round(x,9) for x in v) for v in all_perms_signs([IPHI,IPHI,IPHI,PHI*PHI]))
+V120 |= set(tuple(round(x,9) for x in v) for v in all_perms_signs([PHI,PHI,PHI,IPHI*IPHI]))
+V120 |= set(tuple(round(x,9) for x in v) for v in even_perms_signs([0,IPHI,PHI,SQ5]))
+V120 |= set(tuple(round(x,9) for x in v) for v in even_perms_signs([0,IPHI*IPHI,1,PHI*PHI]))
+V120 |= set(tuple(round(x,9) for x in v) for v in even_perms_signs([IPHI,1,PHI,2]))
+V = [np.array(v) for v in V120]; e,_ = count_edges(V)
+results["120-cell"] = (len(V), e)
 
 all_pass = True
-for name in ["5-cell","8-cell","16-cell","24-cell","600-cell"]:
+for name in ["5-cell","8-cell","16-cell","24-cell","600-cell","120-cell"]:
     vg, eg = results[name]
     vw, ew = KNOWN[name][0], KNOWN[name][1]
     ok = (vg == vw and eg == ew)
