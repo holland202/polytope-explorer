@@ -5,6 +5,8 @@ counts, edge counts, and the edge count matches the known f-vector.
 If the vertex/edge counts don't match the mathematically known values, the whole
 thing is wrong and we stop.
 """
+import sys
+
 import numpy as np
 from itertools import permutations, product
 
@@ -122,3 +124,8 @@ for name in ["5-cell","8-cell","16-cell","24-cell","600-cell","120-cell"]:
 
 print("-"*62)
 print(f"{'ALL VERTEX/EDGE COUNTS CORRECT' if all_pass else 'MATH IS WRONG - STOP'}")
+
+# Until 2026-07-28 the verdict above was printed and then thrown away: this
+# script exited 0 even when it announced the maths was wrong, so every caller
+# saw success. The exit code now carries the verdict.
+sys.exit(0 if all_pass else 1)
